@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using TrafikRuler.Config;
 using TrafikRuler.Core;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.UI.ViewModels;
 
@@ -21,7 +22,7 @@ internal sealed class MainViewModel : ObservableObject, IDisposable
     private int _samplingAdapters;
     private bool _autostart;
 
-    private string _statusText = "Запуск…", _statusKind = "Off", _errorText = "", _totalSpeed = "", _logText = "";
+    private string _statusText = Loc.T("StatusStarting"), _statusKind = "Off", _errorText = "", _totalSpeed = "", _logText = "";
     private bool _hasError, _isLogOpen;
 
     /// <summary>Редактор правила: (правило, новое ли) → изменённое правило или null. Задаёт окно.</summary>
@@ -53,11 +54,15 @@ internal sealed class MainViewModel : ObservableObject, IDisposable
         RefreshCommand = new RelayCommand(() => _engine.RequestRebuild());
         OpenFolderCommand = new RelayCommand(OpenDataFolder);
         ToggleLogCommand = new RelayCommand(() => IsLogOpen = !IsLogOpen);
+        LanguageOptions = new[] { new LanguageOptionViewModel(this, Loc.Auto, null) }
+            .Concat(Loc.Languages.Select(l => new LanguageOptionViewModel(this, l.Code, l.NativeName)))
+            .ToList();
 
         foreach (var line in Logger.Snapshot())
             AppendLog(line);
         Logger.Written += OnLogWritten;
         _engine.Changed += OnEngineChanged;
+        Loc.Changed += OnLanguageChanged;
 
         _timer = new DispatcherTimer(DispatcherPriority.Background, _dispatcher) { Interval = TimeSpan.FromSeconds(1) };
         _timer.Tick += (_, _) => OnTick();
@@ -126,7 +131,7 @@ internal sealed class MainViewModel : ObservableObject, IDisposable
                 bool ok = value ? Autostart.Enable(out string error) : Autostart.Disable(out error);
                 if (!ok)
                 {
-                    Logger.Write("Не удалось изменить автозапуск: " + error);
+                    Logger.Write(Loc.T("LogAutostartFailed", error));
                     _dispatcher.BeginInvoke(() =>
                     {
                         _autostart = !value;
@@ -137,6 +142,36 @@ internal sealed class MainViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Язык интерфейса: "auto", "en" или "ru". Переключается сразу, без перезапуска.</summary>
+    public string LanguagePreference
+    {
+        get => _engine.Settings.Language;
+        set
+        {
+            if (string.IsNullOrEmpty(value) || _engine.Settings.Language == value) return;
+            _engine.Settings.Language = value;
+            OnPropertyChanged();
+            Loc.SetLanguage(value);
+            Logger.Write(Loc.T("LogLanguageChanged", Loc.Language));
+            // Пересборка правил заодно пересчитывает статус движка уже на новом языке.
+            _engine.SaveAndApply();
+        }
+    }
+
+    /// <summary>Подпись варианта «Авто» с языком, который он выберет: «Auto (English)».</summary>
+    public string AutoLanguageLabel =>
+        Loc.T("LanguageAuto", Loc.Languages.First(l => l.Code == Loc.DetectSystem()).NativeName);
+
+    /// <summary>Варианты переключателя языка: «Авто» и все языки из <see cref="Loc.Languages"/>.</summary>
+    public IReadOnlyList<LanguageOptionViewModel> LanguageOptions { get; }
+
+    private void OnLanguageChanged() => _dispatcher.BeginInvoke(() =>
+    {
+        SyncFromEngine();
+        OnPropertyChanged(nameof(AutoLanguageLabel));
+        foreach (var o in LanguageOptions)
+            o.Refresh();
+    });
     private void OnEngineChanged() => _dispatcher.BeginInvoke(SyncFromEngine);
 
     private void OnLogWritten(string line) => _dispatcher.BeginInvoke(() => AppendLog(line));
@@ -204,22 +239,22 @@ internal sealed class MainViewModel : ObservableObject, IDisposable
         if (hasError)
         {
             StatusKind = "Error";
-            StatusText = "Ошибка";
+            StatusText = Loc.T("StatusErrorShort");
         }
         else if (paused)
         {
             StatusKind = "Off";
-            StatusText = "Пауза — все правила остановлены";
+            StatusText = Loc.T("StatusPausedLong");
         }
         else if (active > 0)
         {
             StatusKind = "Ok";
-            StatusText = "Работает · " + Format.Plural(active, "активное правило", "активных правила", "активных правил");
+            StatusText = Loc.T("StatusRunningShort", Loc.Plural("PluralActiveRules", active));
         }
         else
         {
             StatusKind = views.Any(v => v.State is RuleState.Waiting or RuleState.Blocking) ? "Warn" : "Off";
-            StatusText = views.Count == 0 ? "Правил пока нет" : status;
+            StatusText = views.Count == 0 ? Loc.T("StatusNoRulesYet") : status;
         }
 
         OnPropertyChanged(nameof(IsPaused));
@@ -298,7 +333,7 @@ internal sealed class MainViewModel : ObservableObject, IDisposable
 
     private void OnRuleToggled(RuleCardViewModel card)
     {
-        Logger.Write($"{card.Name}: правило {(card.IsEnabled ? "включено" : "выключено")}");
+        Logger.Write(Loc.T(card.IsEnabled ? "LogRuleEnabled" : "LogRuleDisabled", card.Name));
         _engine.SaveAndApply();
     }
 
@@ -310,7 +345,7 @@ internal sealed class MainViewModel : ObservableObject, IDisposable
             return;
         lock (_engine.Settings)
             _engine.Settings.Rules.Add(result);
-        Logger.Write($"Добавлено правило: {result.ProgramPath} → {result.AdapterName}");
+        Logger.Write(Loc.T("LogRuleAdded", result.ProgramPath, result.AdapterName));
         _engine.SaveAndApply();
     }
 
@@ -328,7 +363,7 @@ internal sealed class MainViewModel : ObservableObject, IDisposable
             if (idx >= 0)
                 _engine.Settings.Rules[idx] = result;
         }
-        Logger.Write($"Изменено правило: {result.ProgramPath} → {result.AdapterName}");
+        Logger.Write(Loc.T("LogRuleChanged", result.ProgramPath, result.AdapterName));
         _engine.SaveAndApply();
     }
 
@@ -336,19 +371,19 @@ internal sealed class MainViewModel : ObservableObject, IDisposable
     {
         if (card == null)
             return;
-        if (Confirm != null && !Confirm("Удалить правило?",
-                $"Трафик «{card.Name}» снова пойдёт обычным маршрутом.", "Удалить"))
+        if (Confirm != null && !Confirm(Loc.T("ConfirmDeleteTitle"),
+                Loc.T("ConfirmDeleteText", card.Name), Loc.T("Delete")))
             return;
         lock (_engine.Settings)
             _engine.Settings.Rules.RemoveAll(r => r.Id == card.Id);
-        Logger.Write($"Удалено правило: {card.Rule.ProgramPath}");
+        Logger.Write(Loc.T("LogRuleDeleted", card.Rule.ProgramPath));
         _engine.SaveAndApply();
     }
 
     private void TogglePause()
     {
         _engine.Settings.Paused = !_engine.Settings.Paused;
-        Logger.Write(_engine.Settings.Paused ? "Все правила поставлены на паузу" : "Правила снова работают");
+        Logger.Write(Loc.T(_engine.Settings.Paused ? "LogAllPaused" : "LogResumed"));
         OnPropertyChanged(nameof(IsPaused));
         _engine.SaveAndApply();
     }
@@ -364,5 +399,6 @@ internal sealed class MainViewModel : ObservableObject, IDisposable
         _timer.Stop();
         Logger.Written -= OnLogWritten;
         _engine.Changed -= OnEngineChanged;
+        Loc.Changed -= OnLanguageChanged;
     }
 }

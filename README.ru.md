@@ -23,8 +23,8 @@
 [English](README.md)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshot-dark.png">
-  <img src="docs/assets/screenshot-light.png" width="860" alt="Главное окно TrafikRuler: карточки правил с графиками трафика">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshot-dark.ru.png">
+  <img src="docs/assets/screenshot-light.ru.png" width="860" alt="Главное окно TrafikRuler: карточки правил с графиками трафика">
 </picture>
 
 </div>
@@ -52,6 +52,7 @@ TrafikRuler добавляет этот недостающий переключ�
 | 🌐 **IPv4 и IPv6** | Полноценный NAT для IPv6, если он есть у адаптера; иначе IPv6 отклоняется, и программа быстро переходит на IPv4. |
 | 📈 **Живая статистика** | Графики скорости по правилам, соединения, счётчики трафика, скорость адаптеров. |
 | 🪟 **Родной вид Windows 11** | Fluent, Mica, светлая и тёмная тема и акцентный цвет берутся из системы. Живёт в трее. |
+| 🌍 **Русский и английский** | Язык подбирается по настройкам Windows; переключается в «Настройках» без перезапуска. |
 | 🪶 **Маленький** | Exe ~0,5 МБ. Упал или закрылся — сеть сразу работает как обычно. |
 
 <details>
@@ -59,13 +60,13 @@ TrafikRuler добавляет этот недостающий переключ�
 <br>
 <p align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/rule-dark.png">
-  <img src="docs/assets/rule-light.png" width="420" alt="Окно правила: выбор программы и адаптера">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/rule-dark.ru.png">
+  <img src="docs/assets/rule-light.ru.png" width="420" alt="Окно правила: выбор программы и адаптера">
 </picture>
 &nbsp;
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/settings-dark.png">
-  <img src="docs/assets/settings-light.png" width="300" alt="Панель настроек">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/settings-dark.ru.png">
+  <img src="docs/assets/settings-light.ru.png" width="300" alt="Панель настроек">
 </picture>
 </p>
 </details>
@@ -236,7 +237,7 @@ dotnet run --project tools\IconGen -- --brand docs\assets docs\assets\screenshot
 
 ## Планы
 
-- [ ] Английский интерфейс и локализация
+- [x] Английский интерфейс и локализация
 - [ ] Консольный интерфейс для скриптов
 - [ ] Маршрутизация DNS по программам
 - [ ] Подписанные релизы и пакет `winget`

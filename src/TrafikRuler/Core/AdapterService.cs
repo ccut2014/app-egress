@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.Core;
 
@@ -46,15 +47,15 @@ internal sealed class AdapterInfo
         AdapterKind.Ethernet => "Ethernet",
         AdapterKind.WiFi => "Wi-Fi",
         AdapterKind.Vpn => "VPN",
-        _ => "Другое",
+        _ => Loc.T("KindOther"),
     };
 
     public string DisplayText
     {
         get
         {
-            string ip = IPv4 is { } a ? Addr.Format(a) : "нет IPv4";
-            string state = IsUp ? ip : "отключён";
+            string ip = IPv4 is { } a ? Addr.Format(a) : Loc.T("NoIPv4");
+            string state = IsUp ? ip : Loc.T("AdapterDisconnected");
             return $"{KindLabel}: {Name} ({state})";
         }
     }

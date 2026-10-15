@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using TrafikRuler.Native;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.UI;
 
@@ -16,7 +17,7 @@ internal partial class ProcessPickerWindow : Window
         public List<int> Pids { get; } = new();
         public string? WindowTitle { get; set; }
         public ImageSource? Icon { get; set; }
-        public string PidText => Pids.Count == 1 ? $"PID {Pids[0]}" : $"{Pids.Count} процессов";
+        public string PidText => Pids.Count == 1 ? $"PID {Pids[0]}" : Loc.Plural("PluralProcesses", Pids.Count);
     }
 
     private List<Entry> _entries = new();

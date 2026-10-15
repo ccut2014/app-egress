@@ -1,5 +1,6 @@
 using System.Windows.Media;
 using TrafikRuler.Core;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.UI.ViewModels;
 
@@ -13,7 +14,7 @@ internal sealed class RuleCardViewModel : ObservableObject
 
     private RuleView _view;
     private string _stateText = "", _stateKind = "Off", _adapterText = "", _adapterGlyph = Glyphs.Globe;
-    private string _statsText = "", _downSpeed = "0 Б/с", _upSpeed = "0 Б/с";
+    private string _statsText = "", _downSpeed = Format.Speed(0), _upSpeed = Format.Speed(0);
     private int _processes;
     private double[] _downHistory = new double[SpeedHistory.Length];
     private double[] _upHistory = new double[SpeedHistory.Length];
@@ -31,7 +32,7 @@ internal sealed class RuleCardViewModel : ObservableObject
     public ImageSource? Icon { get; private set; }
     public bool HasIcon => Icon != null;
     public string Name => _view.Rule.DisplayName;
-    public string PathText => _view.Rule.MatchesByNameOnly ? "любая папка: " + _view.Rule.ProgramPath : _view.Rule.ProgramPath;
+    public string PathText => _view.Rule.MatchesByNameOnly ? Loc.T("AnyFolder", _view.Rule.ProgramPath) : _view.Rule.ProgramPath;
 
     public bool IsEnabled
     {
@@ -86,22 +87,22 @@ internal sealed class RuleCardViewModel : ObservableObject
         var target = view.Target;
         if (target != null)
         {
-            string ip = target.IPv4 is { } a ? Addr.Format(a) : "нет IPv4";
+            string ip = target.IPv4 is { } a ? Addr.Format(a) : Loc.T("NoIPv4");
             AdapterText = $"{target.Name} · {ip}";
             AdapterGlyph = Glyphs.ForAdapter(target.Kind);
         }
         else
         {
-            AdapterText = (string.IsNullOrEmpty(view.Rule.AdapterName) ? "адаптер" : view.Rule.AdapterName) + " · не найден";
+            AdapterText = Loc.T("AdapterMissingCard", string.IsNullOrEmpty(view.Rule.AdapterName) ? Loc.T("AdapterWord") : view.Rule.AdapterName);
             AdapterGlyph = Glyphs.Globe;
         }
 
         (StateText, StateKind) = view.State switch
         {
-            RuleState.Active => ("Активно", "Ok"),
-            RuleState.Blocking => ("Блокировка", "Error"),
-            RuleState.Waiting => ("Ждёт адаптер", "Warn"),
-            _ => (paused && view.Rule.Enabled ? "Пауза" : "Выключено", "Off"),
+            RuleState.Active => (Loc.T("StateActive"), "Ok"),
+            RuleState.Blocking => (Loc.T("StateBlocking"), "Error"),
+            RuleState.Waiting => (Loc.T("StateWaiting"), "Warn"),
+            _ => (paused && view.Rule.Enabled ? Loc.T("StatePaused") : Loc.T("StateOff"), "Off"),
         };
         UpdateStats();
     }
@@ -134,17 +135,17 @@ internal sealed class RuleCardViewModel : ObservableObject
         var s = _view.Stats;
         var parts = new List<string>
         {
-            Format.Plural(_processes, "процесс", "процесса", "процессов"),
-            Format.Plural(Volatile.Read(ref s.ActiveFlows), "соединение", "соединения", "соединений"),
+            Loc.Plural("PluralProcesses", _processes),
+            Loc.Plural("PluralConnections", Volatile.Read(ref s.ActiveFlows)),
             "↑ " + Format.Bytes(Interlocked.Read(ref s.BytesOut)),
             "↓ " + Format.Bytes(Interlocked.Read(ref s.BytesIn)),
         };
         long reset = Interlocked.Read(ref s.ConnectionsReset);
         if (reset > 0)
-            parts.Add($"сброшено {reset}");
+            parts.Add(Loc.T("StatsReset", reset));
         long blocked = Interlocked.Read(ref s.PacketsBlocked);
         if (blocked > 0)
-            parts.Add($"заблокировано {blocked}");
+            parts.Add(Loc.T("StatsBlocked", blocked));
         StatsText = string.Join("  ·  ", parts);
     }
 }

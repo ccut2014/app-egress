@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using TrafikRuler.UI.ViewModels;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.UI;
 
@@ -76,11 +77,11 @@ internal partial class MainWindow : Window
             PlacementTarget = button,
             Placement = PlacementMode.Bottom,
         };
-        menu.Items.Add(MenuItem("Изменить", Glyphs.Edit, () => _vm.EditRuleCommand.Execute(card)));
-        menu.Items.Add(MenuItem(card.IsEnabled ? "Выключить" : "Включить", card.IsEnabled ? Glyphs.Pause : Glyphs.Play,
+        menu.Items.Add(MenuItem(Loc.T("Edit"), Glyphs.Edit, () => _vm.EditRuleCommand.Execute(card)));
+        menu.Items.Add(MenuItem(Loc.T(card.IsEnabled ? "TurnOff" : "TurnOn"), card.IsEnabled ? Glyphs.Pause : Glyphs.Play,
             () => card.IsEnabled = !card.IsEnabled));
         menu.Items.Add(new Separator());
-        menu.Items.Add(MenuItem("Удалить", Glyphs.Delete, () => _vm.DeleteRuleCommand.Execute(card)));
+        menu.Items.Add(MenuItem(Loc.T("Delete"), Glyphs.Delete, () => _vm.DeleteRuleCommand.Execute(card)));
         menu.IsOpen = true;
     }
 

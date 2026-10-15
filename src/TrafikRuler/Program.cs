@@ -2,6 +2,7 @@ using System.Security.Principal;
 using System.Windows;
 using TrafikRuler.Config;
 using TrafikRuler.Core;
+using TrafikRuler.Localization;
 using TrafikRuler.UI;
 using TrafikRuler.UI.Theme;
 using TrafikRuler.UI.ViewModels;
@@ -25,27 +26,29 @@ internal static class Program
             return;
         }
 
-        AppDomain.CurrentDomain.UnhandledException += (_, e) => Logger.Write("Необработанная ошибка: " + e.ExceptionObject);
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => Logger.Write(Loc.T("LogUnhandled", e.ExceptionObject));
+
+        // Язык нужен до первого окна: настройки читаются раньше проверки прав (это обычный файл в %AppData%).
+        var settings = SettingsStore.Load();
+        Loc.SetLanguage(settings.Language);
 
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         app.DispatcherUnhandledException += (_, e) =>
         {
-            Logger.Write("Необработанная ошибка UI: " + e.Exception);
+            Logger.Write(Loc.T("LogUnhandledUi", e.Exception));
             e.Handled = true;
         };
         ThemeManager.Initialize(app.Resources);
 
         if (!IsAdministrator())
         {
-            ConfirmWindow.Info(null, "Нужны права администратора",
-                "TrafikRuler перехватывает сетевой трафик, а для этого его нужно запускать от имени администратора.");
+            ConfirmWindow.Info(null, Loc.T("AdminRequiredTitle"), Loc.T("AdminRequiredText"));
             return;
         }
 
         bool minimized = args.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase));
-        Logger.Write("TrafikRuler запущен");
+        Logger.Write(Loc.T("LogStarted", Loc.Language));
 
-        var settings = SettingsStore.Load();
         using var engine = new RuleEngine(settings);
         using var viewModel = new MainViewModel(engine);
         var window = new MainWindow(viewModel);
@@ -73,7 +76,7 @@ internal static class Program
         app.Run();
 
         tray.Dispose();
-        Logger.Write("TrafikRuler завершён");
+        Logger.Write(Loc.T("LogExited"));
     }
 
     private static bool IsAdministrator()

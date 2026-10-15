@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using TrafikRuler.Native;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.Core;
 
@@ -70,7 +71,7 @@ internal sealed class ProcessResolver : IProcessResolver, IDisposable
             }
             catch (Exception ex)
             {
-                Log?.Invoke("Ошибка чтения событий сокетов: " + ex.Message);
+                Log?.Invoke(Loc.T("LogSocketEventsError", ex.Message));
                 return;
             }
             if (n < 0)
@@ -141,7 +142,7 @@ internal sealed class ProcessResolver : IProcessResolver, IDisposable
         }
         catch (Exception ex)
         {
-            Log?.Invoke("Ошибка чтения таблиц соединений: " + ex.Message);
+            Log?.Invoke(Loc.T("LogConnTablesError", ex.Message));
         }
     }
 

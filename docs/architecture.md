@@ -39,6 +39,7 @@ flowchart LR
 | `src/TrafikRuler/Native` | P/Invoke only: WinDivert (`WINDIVERT_ADDRESS` layout is unit-tested), IP Helper tables and `SetTcpEntry`, process queries. |
 | `src/TrafikRuler/Core` | All routing logic. No UI references. |
 | `src/TrafikRuler/Config` | `settings.json` persistence and *Start with Windows* via Task Scheduler. |
+| `src/TrafikRuler/Localization` | `Loc` (string lookup, plurals, live language switching), `{l:Tr Key}` XAML extension and one JSON file per language. |
 | `src/TrafikRuler/UI` | WPF views, view models, Fluent theme (`Theme/`), tray icon. |
 | `src/TrafikRuler/Assets` | Generated icons — do not edit by hand, see `tools/IconGen`. |
 | `tests/TrafikRuler.Tests` | xUnit: packet parsing/rewriting, NAT decisions, native struct layout, UI smoke tests. |
@@ -69,6 +70,10 @@ flowchart LR
 - WinDivert worker threads: `PacketProcessor` and `NatTable` are lock-free (`ConcurrentDictionary`, `Interlocked`).
 - `RuleEngine.Rebuild` runs on the thread pool, serialized by a lock; it raises `Changed`, which the UI marshals to the dispatcher.
 - The UI thread owns the view models; a 1-second `DispatcherTimer` samples counters for the graphs.
+
+## Localization
+
+Strings are looked up by key: `Loc.T("Key", args)` and `Loc.Plural("Key", n)` in code, `{l:Tr Key}` in XAML. The XAML extension is a binding to `Loc.Instance[Key]`; switching the language raises `PropertyChanged("Item[]")`, so every bound string updates in place. Strings built in code (card stats, statuses) are rebuilt on `Loc.Changed`. Missing keys fall back to English, then to the key itself, so a gap is visible instead of blank. `LocalizationTests` scan the sources and fail on unknown, unused or untranslated keys.
 
 ## Testing
 

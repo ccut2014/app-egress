@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.UI;
 
@@ -26,7 +27,7 @@ internal partial class ConfirmWindow : Window
 
     public static bool Ask(Window? owner, string title, string message, string primary)
     {
-        var w = new ConfirmWindow(title, message, primary, "Отмена");
+        var w = new ConfirmWindow(title, message, primary, Loc.T("Cancel"));
         if (owner is { IsVisible: true })
             w.Owner = owner;
         else
@@ -36,7 +37,7 @@ internal partial class ConfirmWindow : Window
 
     public static void Info(Window? owner, string title, string message)
     {
-        var w = new ConfirmWindow(title, message, "Понятно", null);
+        var w = new ConfirmWindow(title, message, Loc.T("GotIt"), null);
         if (owner is { IsVisible: true })
             w.Owner = owner;
         else

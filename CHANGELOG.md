@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-15
+
+### Added
+
+- **English interface.** All windows, the tray menu, statuses, error messages and the log are translated.
+- **Language switch** in Settings: *Auto*, English, Русский. Changes apply instantly, without a restart.
+- **Automatic language detection** on first start: Russian if it is the Windows display language or the first language in the user's language list, English otherwise.
+- Translations live in one JSON file per language (`src/TrafikRuler/Localization`), with correct plural forms; adding a language needs no code changes beyond one line.
+
+### Changed
+
+- Sizes and speeds use the units and decimal separator of the selected language (`1.5 MB/s` / `1,5 МБ/с`).
+
 ## [1.0.0] - 2026-10-15
 
 First public release.
@@ -20,5 +33,6 @@ First public release.
 - Tray icon with status, pause/resume, and *Start with Windows* via Task Scheduler.
 - Single ~0.5 MB executable; .NET 8 Desktop Runtime is installed by the user when missing.
 
-[Unreleased]: https://github.com/li4inka/trafik-ruler/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/li4inka/trafik-ruler/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/li4inka/trafik-ruler/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/li4inka/trafik-ruler/releases/tag/v1.0.0

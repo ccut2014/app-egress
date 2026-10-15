@@ -5,6 +5,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using TrafikRuler.Config;
 using TrafikRuler.Core;
+using TrafikRuler.Localization;
 using TrafikRuler.UI;
 using TrafikRuler.UI.Theme;
 using TrafikRuler.UI.ViewModels;
@@ -39,26 +40,29 @@ internal static class UiThread
     public static void Run(Action action) => Instance.Value.Invoke(action);
 }
 
+[Collection("Localization")]
 public class UiSmokeTests
 {
     /// <summary>Если задана переменная окружения, снимки окон сохраняются в эту папку.</summary>
     private static readonly string? PreviewDir = Environment.GetEnvironmentVariable("TRAFIKRULER_PREVIEW_DIR");
 
-    /// <summary>Правило для демо-данных: адаптер берётся из <see cref="FakeAdapters"/> по имени.</summary>
-    private static RuleView FakeView(string path, string adapterName, RuleState state, bool enabled = true)
+    /// <summary>Правило для демо-данных: адаптер берётся из <see cref="FakeAdapters"/> по Id.</summary>
+    private static RuleView FakeView(string path, string adapterId, RuleState state, bool enabled = true)
     {
-        var adapter = FakeAdapters().First(a => a.Name == adapterName);
+        var adapter = FakeAdapters().First(a => a.Id == adapterId);
         var rule = new Rule { ProgramPath = path, AdapterId = adapter.Id, AdapterName = adapter.Name, Enabled = enabled };
         var stats = new RuleStats { ActiveFlows = state == RuleState.Active ? 35 : 0, BytesIn = 73_400_000, BytesOut = 5_300_000, ConnectionsReset = 6 };
         return new RuleView(rule, state, state == RuleState.Waiting ? null : adapter, stats);
     }
 
+    /// <summary>Демо-адаптеры. Имя Wi-Fi как в Windows на текущем языке интерфейса.</summary>
     private static List<AdapterInfo> FakeAdapters() =>
     [
         new() { Id = "Ethernet", Name = "Ethernet", Description = "Gigabit Ethernet Adapter", Kind = AdapterKind.Ethernet,
                 IsUp = true, IfIndex = 10, IPv4 = Addr.FromIPAddress(System.Net.IPAddress.Parse("192.168.1.20")), HasGateway = true },
-        new() { Id = "Wi-Fi", Name = "Беспроводная сеть", Description = "Wi-Fi 6 Wireless Adapter", Kind = AdapterKind.WiFi,
-                IsUp = true, IfIndex = 9, IPv4 = Addr.FromIPAddress(System.Net.IPAddress.Parse("192.168.43.20")), HasGateway = true },
+        new() { Id = "Wi-Fi", Name = Loc.Language == "ru" ? "Беспроводная сеть" : "Wi-Fi", Description = "Wi-Fi 6 Wireless Adapter",
+                Kind = AdapterKind.WiFi, IsUp = true, IfIndex = 9, IPv4 = Addr.FromIPAddress(System.Net.IPAddress.Parse("192.168.43.20")),
+                HasGateway = true },
         new() { Id = "VPN", Name = "WireGuard", Description = "WireGuard Tunnel", Kind = AdapterKind.Vpn,
                 IsUp = true, IfIndex = 26, IPv4 = Addr.FromIPAddress(System.Net.IPAddress.Parse("10.8.0.2")) },
     ];
@@ -87,64 +91,133 @@ public class UiSmokeTests
         png.Save(fs);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void MainWindow_RendersWithRules(bool dark)
+    /// <summary>Тема и язык на время теста, потом возврат к английскому и системной теме.</summary>
+    private static void WithLook(bool dark, string lang, Action action)
     {
         UiThread.Run(() =>
         {
             ThemeManager.Force(dark);
-            using var engine = new RuleEngine(new AppSettings());
-            using var vm = new MainViewModel(engine);
-            var views = new List<RuleView>
+            Loc.SystemLanguageOverride = lang;
+            Loc.SetLanguage(lang);
+            try
             {
-                FakeView(@"C:\Program Files\Google\Chrome\Application\chrome.exe", "Ethernet", RuleState.Active),
-                FakeView(@"C:\Windows\explorer.exe", "Беспроводная сеть", RuleState.Waiting),
-                FakeView("game.exe", "WireGuard", RuleState.Disabled, enabled: false),
-            };
-            vm.Sync(views, FakeAdapters(), "Работает", hasError: false);
-
-            // Синтетическая история скорости для графика
-            var rnd = new Random(3);
-            for (int i = 0; i < SpeedHistory.Length; i++)
-            {
-                Interlocked.Add(ref views[0].Stats.BytesIn, (long)(1_500_000 + 1_200_000 * Math.Sin(i / 6.0) + rnd.Next(400_000)));
-                Interlocked.Add(ref views[0].Stats.BytesOut, (long)(150_000 + 90_000 * Math.Cos(i / 4.0) + rnd.Next(60_000)));
-                foreach (var r in vm.Rules)
-                    r.Sample();
+                action();
             }
-            vm.Rules[0].Processes = 25;
+            finally
+            {
+                Loc.SystemLanguageOverride = null;
+                Loc.SetLanguage("en");
+                ThemeManager.Force(null);
+            }
+        });
+    }
 
+    private static string Name(string window, bool dark, string lang) => $"{window}-{lang}-{(dark ? "dark" : "light")}.png";
+
+    private static MainViewModel DemoViewModel(RuleEngine engine)
+    {
+        var vm = new MainViewModel(engine);
+        var views = new List<RuleView>
+        {
+            FakeView(@"C:\Program Files\Google\Chrome\Application\chrome.exe", "Ethernet", RuleState.Active),
+            FakeView(@"C:\Windows\explorer.exe", "Wi-Fi", RuleState.Waiting),
+            FakeView("game.exe", "VPN", RuleState.Disabled, enabled: false),
+        };
+        vm.Sync(views, FakeAdapters(), Loc.T("StatusRunning", 1, 3), hasError: false);
+
+        // Синтетическая история скорости для графика
+        var rnd = new Random(3);
+        for (int i = 0; i < SpeedHistory.Length; i++)
+        {
+            Interlocked.Add(ref views[0].Stats.BytesIn, (long)(1_500_000 + 1_200_000 * Math.Sin(i / 6.0) + rnd.Next(400_000)));
+            Interlocked.Add(ref views[0].Stats.BytesOut, (long)(150_000 + 90_000 * Math.Cos(i / 4.0) + rnd.Next(60_000)));
+            foreach (var r in vm.Rules)
+                r.Sample();
+        }
+        vm.Rules[0].Processes = 25;
+        return vm;
+    }
+
+    [Theory]
+    [InlineData(false, "en")]
+    [InlineData(true, "en")]
+    [InlineData(false, "ru")]
+    [InlineData(true, "ru")]
+    public void MainWindow_RendersWithRules(bool dark, string lang)
+    {
+        WithLook(dark, lang, () =>
+        {
+            using var engine = new RuleEngine(new AppSettings());
+            using var vm = DemoViewModel(engine);
             var w = new MainWindow(vm);
             Assert.Equal(3, vm.Rules.Count);
             Assert.Equal(3, vm.Adapters.Count);
-            Render((FrameworkElement)w.Content, 1080, 720, dark ? "main-dark.png" : "main-light.png");
+            Render((FrameworkElement)w.Content, 1080, 720, Name("main", dark, lang));
 
             // Всплывающая панель настроек
             var popup = (System.Windows.Controls.Primitives.Popup)w.FindName("SettingsPopup");
             var flyout = (FrameworkElement)popup.Child;
             flyout.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            Render(flyout, flyout.DesiredSize.Width, flyout.DesiredSize.Height, dark ? "settings-dark.png" : "settings-light.png");
+            Render(flyout, flyout.DesiredSize.Width, flyout.DesiredSize.Height, Name("settings", dark, lang));
             w.AllowClose = true;
             w.Close();
-            ThemeManager.Force(null);
         });
+    }
+
+    [Fact]
+    public void MainWindow_SwitchesLanguageLive()
+    {
+        WithLook(false, "en", () =>
+        {
+            using var engine = new RuleEngine(new AppSettings());
+            using var vm = DemoViewModel(engine);
+            var w = new MainWindow(vm);
+            Render((FrameworkElement)w.Content, 1080, 720, "unused.png");
+
+            var title = FindText((DependencyObject)w.Content, "Traffic routing");
+            Assert.NotNull(title);
+            Assert.Equal("Active", vm.Rules[0].StateText);
+
+            Loc.SetLanguage("ru");
+            // Карточки пересобираются через BeginInvoke — даём диспетчеру их обработать
+            w.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Background);
+
+            Assert.Equal("Маршрутизация трафика", title!.Text);
+
+            // При смене языка модель пересобирает карточки из движка. У тестового движка правил нет,
+            // поэтому подаём демо-правила заново — в программе это делает сам движок.
+            vm.Sync([FakeView("game.exe", "Ethernet", RuleState.Active)], FakeAdapters(), Loc.T("StatusRunning", 1, 1), false);
+            vm.Rules[0].Processes = 25;
+            Assert.Equal("Активно", vm.Rules[0].StateText);
+            Assert.Contains("25 процессов", vm.Rules[0].StatsText);
+            Assert.Contains("1 активное правило", vm.StatusText);
+            w.AllowClose = true;
+            w.Close();
+        });
+    }
+
+    private static System.Windows.Controls.TextBlock? FindText(DependencyObject root, string text)
+    {
+        if (root is System.Windows.Controls.TextBlock tb && tb.Text == text)
+            return tb;
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+            if (FindText(VisualTreeHelper.GetChild(root, i), text) is { } found)
+                return found;
+        return null;
     }
 
     [Fact]
     public void MainWindow_EmptyAndErrorStates()
     {
-        UiThread.Run(() =>
+        WithLook(false, "en", () =>
         {
-            ThemeManager.Force(false);
             using var engine = new RuleEngine(new AppSettings());
             using var vm = new MainViewModel(engine);
-            vm.Sync([], FakeAdapters(), "Нет прав: TrafikRuler нужно запускать от имени администратора (ERROR_ACCESS_DENIED).", hasError: true);
+            vm.Sync([], FakeAdapters(), Loc.T("ErrAccessDenied"), hasError: true);
             Assert.False(vm.HasRules);
             Assert.True(vm.HasError);
             for (int i = 0; i < 4; i++)
-                Logger.Write($"Тестовая строка журнала {i}: " + new string('x', 160));
+                Logger.Write($"Test log line {i}: " + new string('x', 160));
             vm.IsLogOpen = true;
             var w = new MainWindow(vm);
             // Даём диспетчеру обработать строки журнала, пришедшие через BeginInvoke
@@ -152,25 +225,24 @@ public class UiSmokeTests
             Render((FrameworkElement)w.Content, 1080, 720, "main-empty.png");
             w.AllowClose = true;
             w.Close();
-            ThemeManager.Force(null);
         });
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void RuleWindow_Renders(bool dark)
+    [InlineData(false, "en")]
+    [InlineData(true, "en")]
+    [InlineData(false, "ru")]
+    [InlineData(true, "ru")]
+    public void RuleWindow_Renders(bool dark, string lang)
     {
-        UiThread.Run(() =>
+        WithLook(dark, lang, () =>
         {
-            ThemeManager.Force(dark);
             var rule = new Rule { ProgramPath = @"C:\Program Files\Google\Chrome\Application\chrome.exe", AdapterId = "Ethernet" };
             var w = new RuleWindow(rule, FakeAdapters(), isNew: true);
             var root = (FrameworkElement)w.Content;
             root.Measure(new Size(600, double.PositiveInfinity));
-            Render(root, 600, Math.Ceiling(root.DesiredSize.Height), dark ? "rule-dark.png" : "rule-light.png");
+            Render(root, 600, Math.Ceiling(root.DesiredSize.Height), Name("rule", dark, lang));
             w.Close();
-            ThemeManager.Force(null);
         });
     }
 
@@ -184,7 +256,6 @@ public class UiSmokeTests
             picker.Close();
         });
     }
-
     [Fact]
     public void Icons_LoadFromResources()
     {

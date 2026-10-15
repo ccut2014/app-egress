@@ -1,5 +1,6 @@
 using System.Text;
 using TrafikRuler.Native;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.Core;
 
@@ -47,7 +48,7 @@ internal sealed class PacketRouter : IDisposable
             if (filter == null)
             {
                 _processor.Table.Clear();
-                Log?.Invoke("Перехват трафика остановлен: нет активных правил.");
+                Log?.Invoke(Loc.T("LogCaptureStopped"));
                 return invalid;
             }
 
@@ -69,7 +70,7 @@ internal sealed class PacketRouter : IDisposable
                 _workers.Add(t);
                 t.Start();
             }
-            Log?.Invoke($"Перехват трафика запущен ({count} потоков). Фильтр: {filter}");
+            Log?.Invoke(Loc.T("LogCaptureStarted", count, filter));
             return invalid;
         }
     }
@@ -121,7 +122,7 @@ internal sealed class PacketRouter : IDisposable
             }
             catch (Exception ex)
             {
-                Log?.Invoke("Ошибка приёма пакета: " + ex.Message);
+                Log?.Invoke(Loc.T("LogRecvError", ex.Message));
                 return;
             }
             if (len < 0)
@@ -137,7 +138,7 @@ internal sealed class PacketRouter : IDisposable
             catch (Exception ex)
             {
                 // Ошибка в обработке не должна ломать сеть: отправляем пакет как есть.
-                Log?.Invoke("Ошибка обработки пакета: " + ex.Message);
+                Log?.Invoke(Loc.T("LogProcessError", ex.Message));
                 send = true;
             }
             if (send)

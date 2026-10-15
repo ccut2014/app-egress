@@ -1,6 +1,7 @@
 using System.Net.NetworkInformation;
 using TrafikRuler.Config;
 using TrafikRuler.Native;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.Core;
 
@@ -27,7 +28,7 @@ internal sealed class RuleEngine : IDisposable
 
     public AppSettings Settings { get; }
 
-    public string Status { get; private set; } = "Запуск…";
+    public string Status { get; private set; } = Loc.T("StatusStarting");
     public bool HasError { get; private set; }
 
     public IReadOnlyList<AdapterInfo> Adapters => Volatile.Read(ref _adapters);
@@ -68,7 +69,7 @@ internal sealed class RuleEngine : IDisposable
         }
         catch (Exception ex)
         {
-            Logger.Write("Не удалось сохранить настройки: " + ex.Message);
+            Logger.Write(Loc.T("LogSettingsSaveFailed", ex.Message));
         }
         RequestRebuild();
     }
@@ -99,8 +100,8 @@ internal sealed class RuleEngine : IDisposable
             }
             catch (Exception ex)
             {
-                SetStatus("Ошибка: " + ex.Message, error: true);
-                Logger.Write("Ошибка применения правил: " + ex);
+                SetStatus(Loc.T("StatusError", ex.Message), error: true);
+                Logger.Write(Loc.T("LogApplyError", ex));
             }
         }
         Changed?.Invoke();
@@ -180,7 +181,7 @@ internal sealed class RuleEngine : IDisposable
                     continue;
                 int n = ConnectionResetter.ResetForRule(r, snapshot, _resolver, adapters);
                 if (n > 0)
-                    Logger.Write($"{r.Rule.DisplayName}: сброшено соединений: {n}");
+                    Logger.Write(Loc.T("LogConnectionsReset", r.Rule.DisplayName, n));
                 reset += n;
             }
         }
@@ -189,17 +190,17 @@ internal sealed class RuleEngine : IDisposable
         {
             if (v.State == RuleState.Disabled)
                 continue;
-            string where = v.Target?.DisplayText ?? (string.IsNullOrEmpty(v.Rule.AdapterName) ? "адаптер не найден" : v.Rule.AdapterName);
-            Logger.Write($"Правило {v.Rule.DisplayName} → {where}: {DescribeState(v.State)}");
+            string where = v.Target?.DisplayText ?? (string.IsNullOrEmpty(v.Rule.AdapterName) ? Loc.T("AdapterNotFound") : v.Rule.AdapterName);
+            Logger.Write(Loc.T("LogRuleState", v.Rule.DisplayName, where, DescribeState(v.State)));
         }
 
         int activeCount = active.Count(r => r.State == RuleState.Active);
         if (Settings.Paused)
-            SetStatus("Пауза: все правила выключены", error: false);
+            SetStatus(Loc.T("StatusPaused"), error: false);
         else if (!snapshot.NeedsInterception)
-            SetStatus(active.Count == 0 ? "Нет включённых правил" : "Ждём целевые адаптеры", error: false);
+            SetStatus(active.Count == 0 ? Loc.T("StatusNoRules") : Loc.T("StatusWaitingAdapters"), error: false);
         else
-            SetStatus($"Работает. Активных правил: {activeCount} из {views.Count}", error: false);
+            SetStatus(Loc.T("StatusRunning", activeCount, views.Count), error: false);
     }
 
     /// <summary>Правило только что включилось или сменило целевой адрес: старые соединения нужно перенести.</summary>
@@ -219,10 +220,10 @@ internal sealed class RuleEngine : IDisposable
 
     public static string DescribeState(RuleState s) => s switch
     {
-        RuleState.Active => "активно",
-        RuleState.Blocking => "адаптер недоступен, трафик заблокирован",
-        RuleState.Waiting => "адаптер недоступен, трафик идёт обычным маршрутом",
-        _ => "выключено",
+        RuleState.Active => Loc.T("StateActiveLower"),
+        RuleState.Blocking => Loc.T("StateBlockingLong"),
+        RuleState.Waiting => Loc.T("StateWaitingLong"),
+        _ => Loc.T("StateDisabledLower"),
     };
 
     private void SetStatus(string text, bool error)

@@ -31,7 +31,7 @@ internal static class AppIcons
             _ => "tray-idle.ico",
         };
         return typeof(AppIcons).Assembly.GetManifestResourceStream(name)
-               ?? throw new InvalidOperationException("Нет ресурса иконки " + name);
+               ?? throw new InvalidOperationException("Missing icon resource " + name);
     }
 
     /// <summary>Иконка для значка в трее, размером под текущий DPI.</summary>

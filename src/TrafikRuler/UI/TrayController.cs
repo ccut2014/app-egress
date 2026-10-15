@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using TrafikRuler.Core;
 using TrafikRuler.UI.Theme;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.UI;
 
@@ -23,9 +24,9 @@ internal sealed class TrayController : IDisposable
         _engine = engine;
         _window = window;
 
-        _openItem = new ToolStripMenuItem("Открыть TrafikRuler", null, (_, _) => _window.ShowAndActivate());
-        _pauseItem = new ToolStripMenuItem("Пауза всех правил", null, (_, _) => TogglePause());
-        _exitItem = new ToolStripMenuItem("Выход", null, (_, _) => exit());
+        _openItem = new ToolStripMenuItem(Loc.T("TrayOpen"), null, (_, _) => _window.ShowAndActivate());
+        _pauseItem = new ToolStripMenuItem(Loc.T("TrayPauseAll"), null, (_, _) => TogglePause());
+        _exitItem = new ToolStripMenuItem(Loc.T("TrayExit"), null, (_, _) => exit());
         _menu = new ContextMenuStrip
         {
             ShowImageMargin = true,
@@ -56,8 +57,7 @@ internal sealed class TrayController : IDisposable
             if (_hintShown)
                 return;
             _hintShown = true;
-            _notifyIcon.ShowBalloonTip(3000, "TrafikRuler работает в трее",
-                "Правила продолжают действовать. Выход — через меню значка.", ToolTipIcon.Info);
+            _notifyIcon.ShowBalloonTip(3000, Loc.T("TrayHintTitle"), Loc.T("TrayHintText"), ToolTipIcon.Info);
         };
         _engine.Changed += OnEngineChanged;
     }
@@ -77,7 +77,7 @@ internal sealed class TrayController : IDisposable
     private void TogglePause()
     {
         _engine.Settings.Paused = !_engine.Settings.Paused;
-        Logger.Write(_engine.Settings.Paused ? "Все правила поставлены на паузу" : "Правила снова работают");
+        Logger.Write(Loc.T(_engine.Settings.Paused ? "LogAllPaused" : "LogResumed"));
         _engine.SaveAndApply();
     }
 
@@ -87,7 +87,9 @@ internal sealed class TrayController : IDisposable
         _menu.Renderer = new FluentMenuRenderer(palette);
         _menu.BackColor = palette.Background;
         bool paused = _engine.Settings.Paused;
-        _pauseItem.Text = paused ? "Продолжить" : "Пауза всех правил";
+        _openItem.Text = Loc.T("TrayOpen");
+        _exitItem.Text = Loc.T("TrayExit");
+        _pauseItem.Text = Loc.T(paused ? "TrayResume" : "TrayPauseAll");
         SetGlyph(_openItem, "", palette);
         SetGlyph(_pauseItem, paused ? Glyphs.Play : Glyphs.Pause, palette);
         SetGlyph(_exitItem, "", palette);

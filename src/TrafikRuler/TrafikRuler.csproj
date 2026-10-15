@@ -22,8 +22,8 @@
 
     <!-- Метаданные в свойствах exe (вкладка «Подробно»). Подмена этих полей — часть
          защиты от ребрендинга: см. docs/security-audit.md. -->
-    <Version>1.0.0</Version>
-    <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.1.0</Version>
+    <FileVersion>1.1.0.0</FileVersion>
     <Product>TrafikRuler</Product>
     <AssemblyTitle>TrafikRuler</AssemblyTitle>
     <Company>kulich Software</Company>
@@ -52,6 +52,11 @@
     <EmbeddedResource Include="Assets\tray-active.ico" LogicalName="tray-active.ico" />
     <EmbeddedResource Include="Assets\tray-idle.ico" LogicalName="tray-idle.ico" />
     <EmbeddedResource Include="Assets\tray-error.ico" LogicalName="tray-error.ico" />
+  </ItemGroup>
+
+  <!-- Переводы интерфейса: Localization\<код>.json встраивается как lang.<код>.json -->
+  <ItemGroup>
+    <EmbeddedResource Include="Localization\*.json" LogicalName="lang.%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!--

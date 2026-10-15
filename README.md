@@ -52,6 +52,7 @@ TrafikRuler adds the missing switch:
 | 🌐 **IPv4 + IPv6** | Full IPv6 NAT when the adapter has it; otherwise IPv6 is refused so the app falls back to IPv4 fast. |
 | 📈 **Live stats** | Per-rule speed graphs, connections, traffic counters, adapter throughput. |
 | 🪟 **Native Windows 11 look** | Fluent design, Mica, light/dark theme and accent color follow your system. Lives in the tray. |
+| 🌍 **English & Russian** | Picks your Windows language automatically; switch any time in Settings, no restart. |
 | 🪶 **Tiny** | ~0.5 MB executable. Crashes or exits? Your network instantly goes back to normal. |
 
 <details>
@@ -70,7 +71,7 @@ TrafikRuler adds the missing switch:
 </p>
 </details>
 
-> **Note:** the interface is currently in Russian. English localization is the [#1 item on the roadmap](#roadmap) — contributions welcome!
+> **Your language missing?** Translations are a single JSON file — see [CONTRIBUTING.md](CONTRIBUTING.md#translating-the-ui).
 
 ## Quick start
 
@@ -203,7 +204,7 @@ dotnet publish src\TrafikRuler -c Release -r win-x64 --self-contained true `
 
 ## Roadmap
 
-- [ ] English UI and localization infrastructure
+- [x] English UI and localization infrastructure
 - [ ] Command-line interface for scripting
 - [ ] Per-app DNS routing
 - [ ] Code-signed releases and a `winget` package

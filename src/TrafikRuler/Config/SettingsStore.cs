@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using TrafikRuler.Core;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.Config;
 
@@ -16,6 +17,9 @@ public sealed class AppSettings
 
     /// <summary>Глобальная пауза всех правил.</summary>
     public bool Paused { get; set; }
+
+    /// <summary>Язык интерфейса: "auto" (по языку Windows) или код языка ("en", "ru").</summary>
+    public string Language { get; set; } = Loc.Auto;
 }
 
 internal static class SettingsStore
@@ -36,7 +40,7 @@ internal static class SettingsStore
         }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         {
-            Logger.Write("Не удалось прочитать настройки, используются значения по умолчанию: " + ex.Message);
+            Logger.Write(Loc.T("LogSettingsReadFailed", ex.Message));
             TryBackupBroken();
         }
         return new AppSettings();

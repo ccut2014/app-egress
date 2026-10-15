@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
 using TrafikRuler.Core;
+using TrafikRuler.Localization;
 
 namespace TrafikRuler.UI;
 
@@ -23,17 +24,17 @@ internal partial class RuleWindow : Window
         MaxHeight = SystemParameters.WorkArea.Height - 40;
         _rule = rule;
 
-        Title = isNew ? "Новое правило" : "Изменить правило";
+        Title = Loc.T(isNew ? "RuleNewTitle" : "RuleEditTitle");
         Heading.Text = Title;
-        SaveButton.Content = isNew ? "Добавить" : "Сохранить";
+        SaveButton.Content = Loc.T(isNew ? "Add" : "Save");
 
         foreach (var a in adapters)
             _options.Add(Describe(a));
         if (!string.IsNullOrEmpty(rule.AdapterId) && adapters.All(a => a.Id != rule.AdapterId))
         {
             // Адаптер из правила сейчас не найден (например, Wi-Fi выключен): оставляем его в списке.
-            var missing = new AdapterInfo { Id = rule.AdapterId, Name = rule.AdapterName, Description = "сейчас не найден" };
-            _options.Add(new AdapterOption(missing, Glyphs.Globe, rule.AdapterName, "", "Сейчас не найден в системе", false));
+            var missing = new AdapterInfo { Id = rule.AdapterId, Name = rule.AdapterName, Description = Loc.T("AdapterNotFoundNow") };
+            _options.Add(new AdapterOption(missing, Glyphs.Globe, rule.AdapterName, "", Loc.T("AdapterNotFoundInSystem"), false));
         }
         AdapterList.ItemsSource = _options;
 
@@ -63,8 +64,8 @@ internal partial class RuleWindow : Window
 
     private static AdapterOption Describe(AdapterInfo a)
     {
-        string ip = a.IPv4 is { } v4 ? Addr.Format(v4) : "нет IPv4";
-        string detail = a.IsUp ? $"{ip} · {a.Description}" : $"отключён · {a.Description}";
+        string ip = a.IPv4 is { } v4 ? Addr.Format(v4) : Loc.T("NoIPv4");
+        string detail = a.IsUp ? $"{ip} · {a.Description}" : Loc.T("AdapterDisconnectedDetail", a.Description);
         return new AdapterOption(a, Glyphs.ForAdapter(a.Kind), a.Name, a.KindLabel, detail, a.IsUsable);
     }
 
@@ -84,15 +85,15 @@ internal partial class RuleWindow : Window
         string path = PathBox.Text.Trim().Trim('"');
         if (path.Length == 0)
         {
-            ProgramName.Text = "Программа не выбрана";
-            ProgramDetail.Text = "Выберите её среди запущенных или укажите exe";
+            ProgramName.Text = Loc.T("ProgramNotSelected");
+            ProgramDetail.Text = Loc.T("ProgramPickHint");
             ProgramIcon.Source = null;
             ProgramGlyph.Visibility = Visibility.Visible;
             return;
         }
         bool byName = path.IndexOfAny(['\\', '/']) < 0;
         ProgramName.Text = Path.GetFileName(path);
-        ProgramDetail.Text = byName ? "Любой exe с таким именем" : path;
+        ProgramDetail.Text = byName ? Loc.T("ProgramAnyExe") : path;
         var icon = byName ? null : IconCache.Get(path);
         ProgramIcon.Source = icon;
         ProgramGlyph.Visibility = icon == null ? Visibility.Visible : Visibility.Collapsed;
@@ -105,11 +106,11 @@ internal partial class RuleWindow : Window
         var a = (AdapterList.SelectedItem as AdapterOption)?.Info;
         string hint = a switch
         {
-            null => "Выберите адаптер.",
-            { IsUp: false } => "Адаптер сейчас отключён. Правило заработает, когда он подключится.",
-            { IPv4: null } => "У адаптера нет IPv4-адреса. Правило заработает, когда адрес появится.",
-            { HasGateway: false, Kind: not AdapterKind.Vpn } => "У адаптера нет шлюза по умолчанию: интернет через него может не работать.",
-            { IPv6: null } => "У адаптера нет IPv6: IPv6-соединения программы будут отклоняться, и она перейдёт на IPv4.",
+            null => Loc.T("HintSelectAdapter"),
+            { IsUp: false } => Loc.T("HintAdapterDown"),
+            { IPv4: null } => Loc.T("HintNoIPv4"),
+            { HasGateway: false, Kind: not AdapterKind.Vpn } => Loc.T("HintNoGateway"),
+            { IPv6: null } => Loc.T("HintNoIPv6"),
             _ => "",
         };
         HintText.Text = hint;
@@ -131,8 +132,8 @@ internal partial class RuleWindow : Window
     {
         var dlg = new OpenFileDialog
         {
-            Filter = "Программы (*.exe)|*.exe|Все файлы (*.*)|*.*",
-            Title = "Выберите программу",
+            Filter = Loc.T("FileFilterExe"),
+            Title = Loc.T("FileDialogTitle"),
         };
         string current = PathBox.Text.Trim().Trim('"');
         if (File.Exists(current))
@@ -153,16 +154,16 @@ internal partial class RuleWindow : Window
         string path = PathBox.Text.Trim().Trim('"');
         if (path.Length == 0)
         {
-            ConfirmWindow.Info(this, "Не выбрана программа", "Выберите программу из запущенных, через «Обзор…» или впишите имя exe.");
+            ConfirmWindow.Info(this, Loc.T("ProgramNotSelected"), Loc.T("NoProgramText"));
             return;
         }
         bool byName = ByName.IsChecked == true || path.IndexOfAny(['\\', '/']) < 0;
         if (!byName && !File.Exists(path)
-            && !ConfirmWindow.Ask(this, "Файл не найден", $"«{path}» не существует. Всё равно сохранить правило?", "Сохранить"))
+            && !ConfirmWindow.Ask(this, Loc.T("FileNotFoundTitle"), Loc.T("FileNotFoundText", path), Loc.T("Save")))
             return;
         if (AdapterList.SelectedItem is not AdapterOption option)
         {
-            ConfirmWindow.Info(this, "Не выбран адаптер", "Выберите адаптер, через который пойдёт трафик программы.");
+            ConfirmWindow.Info(this, Loc.T("NoAdapterTitle"), Loc.T("NoAdapterText"));
             return;
         }
 
