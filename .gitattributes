@@ -1,0 +1,20 @@
+# Текст хранится в репозитории с LF, на Windows выдаётся с CRLF
+* text=auto
+
+*.cs      text diff=csharp
+*.xaml    text
+*.csproj  text
+*.sln     text eol=crlf
+*.ps1     text eol=crlf
+*.md      text
+*.yml     text eol=lf
+
+# Бинарные файлы
+*.ico     binary
+*.png     binary
+*.dll     binary
+*.sys     binary
+*.exe     binary
+
+# Статистика языков GitHub: документацию не считаем
+docs/**        linguist-documentation

@@ -1,0 +1,413 @@
+<Window x:Class="TrafikRuler.UI.MainWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:TrafikRuler.UI"
+        xmlns:c="clr-namespace:TrafikRuler.UI.Controls"
+        Title="TrafikRuler"
+        Width="1080" Height="720" MinWidth="820" MinHeight="540"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="{DynamicResource Font.Text}" FontSize="14"
+        Foreground="{DynamicResource Text.Primary}"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Ideal">
+
+    <Window.Resources>
+        <ui:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <ui:InverseBoolConverter x:Key="Not" />
+
+        <!-- Точка состояния: цвет по StatusKind / StateKind -->
+        <Style x:Key="StatusDot" TargetType="Ellipse">
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Fill" Value="{DynamicResource State.Off}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding StatusKind}" Value="Ok">
+                    <Setter Property="Fill" Value="{DynamicResource State.Ok}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding StatusKind}" Value="Warn">
+                    <Setter Property="Fill" Value="{DynamicResource State.Warn}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding StatusKind}" Value="Error">
+                    <Setter Property="Fill" Value="{DynamicResource State.Error}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Карточка правила -->
+        <DataTemplate x:Key="RuleCard">
+            <Border x:Name="Card" Style="{StaticResource Card}" Margin="0,0,0,8" Padding="16,14,12,14"
+                    Background="{DynamicResource Card.Bg}" MouseLeftButtonDown="OnCardMouseDown">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" MinWidth="200" />
+                        <ColumnDefinition Width="260" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Иконка программы -->
+                    <Border Width="48" Height="48" CornerRadius="10" Margin="0,0,16,0" VerticalAlignment="Center"
+                            Background="{DynamicResource Subtle.BgHover}">
+                        <Grid>
+                            <Image x:Name="AppIcon" Source="{Binding Icon}" Width="32" Height="32"
+                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                            <TextBlock x:Name="FallbackIcon" Style="{StaticResource Icon}" Text="&#xE737;" FontSize="22"
+                                       HorizontalAlignment="Center" Foreground="{DynamicResource Text.Secondary}" Visibility="Collapsed" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Название, маршрут, счётчики -->
+                    <StackPanel x:Name="Info" Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}" Style="{StaticResource Text.BodyStrong}" FontSize="15"
+                                       TextTrimming="CharacterEllipsis" ToolTip="{Binding PathText}" />
+                            <Border x:Name="Badge" CornerRadius="10" Padding="8,2,10,3" Margin="10,0,0,0" VerticalAlignment="Center"
+                                    Background="{DynamicResource State.OffBg}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse x:Name="BadgeDot" Width="6" Height="6" Margin="0,1,6,0" VerticalAlignment="Center"
+                                             Fill="{DynamicResource State.Off}" />
+                                    <TextBlock x:Name="BadgeText" Text="{Binding StateText}" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource State.Off}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE72A;" FontSize="10" Margin="0,1,8,0"
+                                       Foreground="{DynamicResource Text.Tertiary}" />
+                            <TextBlock Style="{StaticResource Icon}" Text="{Binding AdapterGlyph}" FontSize="14" Margin="0,0,7,0"
+                                       Foreground="{DynamicResource Accent.Text}" />
+                            <TextBlock Text="{Binding AdapterText}" FontSize="13" Foreground="{DynamicResource Text.Primary}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding StatsText}" Style="{StaticResource Text.Caption}" Margin="0,7,0,0"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <!-- График скорости -->
+                    <Grid x:Name="Graph" Grid.Column="2" Margin="20,0,16,0" VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="46" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <c:Sparkline Primary="{Binding DownHistory}" Secondary="{Binding UpHistory}"
+                                     PrimaryBrush="{DynamicResource Graph.Down}" SecondaryBrush="{DynamicResource Graph.Up}"
+                                     GridBrush="{DynamicResource Divider}" />
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,0">
+                            <TextBlock Text="↓" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Graph.Down}" />
+                            <TextBlock Text="{Binding DownSpeed}" Style="{StaticResource Text.Caption}" Margin="4,0,14,0" />
+                            <TextBlock Text="↑" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Graph.Up}" />
+                            <TextBlock Text="{Binding UpSpeed}" Style="{StaticResource Text.Caption}" Margin="4,0,0,0" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Переключатель и меню -->
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsEnabled}"
+                                  ToolTip="Включить или выключить правило" />
+                        <Button Style="{StaticResource Btn.Icon}" Content="&#xE712;" Margin="10,0,0,0" ToolTip="Ещё"
+                                Click="OnMoreClick" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding HasIcon}" Value="False">
+                    <Setter TargetName="FallbackIcon" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding StateKind}" Value="Ok">
+                    <Setter TargetName="Badge" Property="Background" Value="{DynamicResource State.OkBg}" />
+                    <Setter TargetName="BadgeDot" Property="Fill" Value="{DynamicResource State.Ok}" />
+                    <Setter TargetName="BadgeText" Property="Foreground" Value="{DynamicResource State.Ok}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding StateKind}" Value="Warn">
+                    <Setter TargetName="Badge" Property="Background" Value="{DynamicResource State.WarnBg}" />
+                    <Setter TargetName="BadgeDot" Property="Fill" Value="{DynamicResource State.Warn}" />
+                    <Setter TargetName="BadgeText" Property="Foreground" Value="{DynamicResource State.Warn}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding StateKind}" Value="Error">
+                    <Setter TargetName="Badge" Property="Background" Value="{DynamicResource State.ErrorBg}" />
+                    <Setter TargetName="BadgeDot" Property="Fill" Value="{DynamicResource State.Error}" />
+                    <Setter TargetName="BadgeText" Property="Foreground" Value="{DynamicResource State.Error}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                    <Setter TargetName="Info" Property="Opacity" Value="0.6" />
+                    <Setter TargetName="AppIcon" Property="Opacity" Value="0.5" />
+                    <Setter TargetName="Graph" Property="Opacity" Value="0.35" />
+                </DataTrigger>
+                <Trigger SourceName="Card" Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Card" Property="Background" Value="{DynamicResource Card.BgHover}" />
+                </Trigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Чип адаптера -->
+        <DataTemplate x:Key="AdapterChip">
+            <Border x:Name="Chip" CornerRadius="6" Padding="10,6,12,6" Margin="0,0,8,8" BorderThickness="1"
+                    Background="{DynamicResource Card.Bg}" BorderBrush="{DynamicResource Card.Stroke}"
+                    ToolTip="{Binding ToolTipText}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="Glyph" Style="{StaticResource Icon}" Text="{Binding Glyph}" FontSize="15" Margin="0,0,8,0"
+                               Foreground="{DynamicResource Text.Secondary}" />
+                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding IpText}" Style="{StaticResource Text.Caption}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SpeedText}" Style="{StaticResource Text.CaptionTertiary}" Margin="12,0,0,0"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsUsed}" Value="True">
+                    <Setter TargetName="Chip" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                    <Setter TargetName="Chip" Property="Background" Value="{DynamicResource Accent.Subtle}" />
+                    <Setter TargetName="Glyph" Property="Foreground" Value="{DynamicResource Accent.Text}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Строка настройки: заголовок, пояснение и переключатель -->
+        <Style x:Key="SettingTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.Body}">
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок окна (Windows 11: кнопки рисует система справа) -->
+        <StackPanel x:Name="TitleBar" Orientation="Horizontal" Height="32" Margin="16,0,0,0">
+            <Image x:Name="TitleIcon" Width="16" Height="16" VerticalAlignment="Center" />
+            <TextBlock Text="TrafikRuler" FontSize="12" Margin="12,0,0,0" VerticalAlignment="Center"
+                       Foreground="{DynamicResource Text.Secondary}" />
+        </StackPanel>
+
+        <!-- Шапка -->
+        <Grid Grid.Row="1" Margin="28,12,28,18">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Маршрутизация трафика" Style="{StaticResource Text.Title}" />
+                <StackPanel Orientation="Horizontal" Margin="1,8,0,0">
+                    <Ellipse Style="{StaticResource StatusDot}" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding StatusText}" FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Text.Secondary}" />
+                    <TextBlock Text="{Binding TotalSpeed}" FontSize="13" Margin="16,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Text.Tertiary}" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <ToggleButton x:Name="SettingsButton" Style="{StaticResource ToggleBtn.Subtle}" ToolTip="Настройки"
+                              IsHitTestVisible="{Binding IsOpen, ElementName=SettingsPopup, Converter={StaticResource Not}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE713;" />
+                        <TextBlock Text="Настройки" Margin="8,0,0,0" />
+                    </StackPanel>
+                </ToggleButton>
+                <Popup x:Name="SettingsPopup" PlacementTarget="{Binding ElementName=SettingsButton}" Placement="Bottom"
+                       HorizontalOffset="-216" VerticalOffset="-12" StaysOpen="False" AllowsTransparency="True"
+                       PopupAnimation="Fade" IsOpen="{Binding IsChecked, ElementName=SettingsButton}">
+                    <!-- Отступы вмещают тень: BlurRadius 24 + ShadowDepth 6 снизу -->
+                    <Border Margin="28,12,28,36" Padding="20,18" Width="380" CornerRadius="8" Background="{DynamicResource Popup.Bg}"
+                            BorderBrush="{DynamicResource Popup.Stroke}" BorderThickness="1"
+                            TextElement.Foreground="{DynamicResource Text.Primary}">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="24" ShadowDepth="6" Direction="270" Opacity="0.25" />
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="Настройки" Style="{StaticResource Text.Subtitle}" FontSize="17" Margin="0,0,0,14" />
+
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="Не трогать локальную сеть" Style="{StaticResource SettingTitle}" />
+                                    <TextBlock Text="Принтеры, NAS и роутер остаются на своём адаптере" TextWrapping="Wrap"
+                                               Style="{StaticResource Text.Caption}" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="{Binding ExcludeLocalNetworks}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="Разрывать открытые соединения" Style="{StaticResource SettingTitle}" />
+                                    <TextBlock Text="При включении правила программа сразу переподключится через нужный адаптер"
+                                               TextWrapping="Wrap" Style="{StaticResource Text.Caption}" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="{Binding ResetExistingConnections}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="Запускать вместе с Windows" Style="{StaticResource SettingTitle}" />
+                                    <TextBlock Text="Свёрнутым в трей, без запроса UAC (через Планировщик заданий)"
+                                               TextWrapping="Wrap" Style="{StaticResource Text.Caption}" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="{Binding AutostartEnabled}" />
+                            </Grid>
+
+                            <Border Height="1" Background="{DynamicResource Divider}" Margin="-20,0,-20,8" />
+
+                            <Button Style="{StaticResource Btn.Subtle}" HorizontalContentAlignment="Left" Margin="-12,0"
+                                    Command="{Binding RefreshCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE72C;" FontSize="14" />
+                                    <TextBlock Text="Обновить список адаптеров" FontSize="13" Margin="12,0,0,0" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource Btn.Subtle}" HorizontalContentAlignment="Left" Margin="-12,0"
+                                    Command="{Binding OpenFolderCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE838;" FontSize="14" />
+                                    <TextBlock Text="Открыть папку с настройками и журналом" FontSize="13" Margin="12,0,0,0" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Popup>
+
+                <Button Style="{StaticResource Btn.Subtle}" Margin="4,0,0,0" Command="{Binding TogglePauseCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+                                    <Setter Property="Text" Value="&#xE769;" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                            <Setter Property="Text" Value="&#xE768;" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Margin="8,0,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="Пауза" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                            <Setter Property="Text" Value="Продолжить" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Button>
+
+                <Button Style="{StaticResource Btn.Accent}" Margin="8,0,0,0" Padding="14,6" Command="{Binding AddRuleCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE710;" FontSize="13" />
+                        <TextBlock Text="Добавить правило" Margin="8,0,0,0" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Ошибка -->
+        <Border Grid.Row="2" Margin="28,0,28,14" Padding="14,12" CornerRadius="6" BorderThickness="1"
+                Background="{DynamicResource InfoBar.ErrorBg}" BorderBrush="{DynamicResource Card.Stroke}"
+                Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource Icon}" Text="&#xEA39;" Foreground="{DynamicResource State.Error}"
+                           VerticalAlignment="Top" Margin="0,2,12,0" />
+                <TextBlock Grid.Column="1" TextWrapping="Wrap" FontSize="13">
+                    <Run Text="Ошибка" FontWeight="SemiBold" />
+                    <Run Text="  " />
+                    <Run Text="{Binding ErrorText, Mode=OneWay}" />
+                </TextBlock>
+            </Grid>
+        </Border>
+
+        <!-- Правила -->
+        <Grid Grid.Row="3">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,0,22,4"
+                          Visibility="{Binding HasRules, Converter={StaticResource BoolToVis}}">
+                <ItemsControl ItemsSource="{Binding Rules}" ItemTemplate="{StaticResource RuleCard}" Margin="0,0,6,0" />
+            </ScrollViewer>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False"
+                          Visibility="{Binding HasRules, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,8,0,24" MaxWidth="440">
+                <Border Width="88" Height="88" CornerRadius="44" Background="{DynamicResource Accent.Subtle}" HorizontalAlignment="Center">
+                    <TextBlock Style="{StaticResource Icon}" Text="&#xE774;" FontSize="40" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource Accent.Text}" />
+                </Border>
+                <TextBlock Text="Добавьте первое правило" Style="{StaticResource Text.Subtitle}" HorizontalAlignment="Center"
+                           Margin="0,20,0,0" />
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" Style="{StaticResource Text.Caption}" FontSize="13"
+                           Text="Выберите программу (можно уже запущенную) и адаптер, через который должен идти её трафик: Ethernet, Wi-Fi или VPN." />
+                <Button Style="{StaticResource Btn.Accent}" HorizontalAlignment="Center" Margin="0,20,0,0" Padding="16,7"
+                        Command="{Binding AddRuleCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE710;" FontSize="13" />
+                        <TextBlock Text="Добавить правило" Margin="8,0,0,0" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Адаптеры -->
+        <StackPanel Grid.Row="4" Margin="28,10,28,6">
+            <TextBlock Text="Подключённые адаптеры" Style="{StaticResource Text.Caption}" Margin="2,0,0,8" />
+            <ItemsControl ItemsSource="{Binding Adapters}" ItemTemplate="{StaticResource AdapterChip}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </StackPanel>
+
+        <!-- Журнал -->
+        <Border Grid.Row="5" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Divider}">
+            <StackPanel>
+                <Button Style="{StaticResource Btn.Subtle}" HorizontalAlignment="Left" Margin="18,4,0,4" Padding="10,5"
+                        Command="{Binding ToggleLogCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE81C;" FontSize="13" Foreground="{DynamicResource Text.Secondary}" />
+                        <TextBlock Text="Журнал" FontSize="13" Margin="8,0,8,0" Foreground="{DynamicResource Text.Secondary}" />
+                        <TextBlock FontSize="10" Foreground="{DynamicResource Text.Secondary}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+                                    <Setter Property="Text" Value="&#xE70E;" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsLogOpen}" Value="True">
+                                            <Setter Property="Text" Value="&#xE70D;" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Button>
+                <TextBox x:Name="LogBox" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" Height="160"
+                         Margin="28,0,28,16" Padding="10,8" FontFamily="{StaticResource Font.Mono}" FontSize="12"
+                         TextWrapping="NoWrap" VerticalContentAlignment="Stretch"
+                         VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                         Visibility="{Binding IsLogOpen, Converter={StaticResource BoolToVis}}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

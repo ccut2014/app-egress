@@ -1,0 +1,61 @@
+name: Release
+
+# Push a tag like v1.2.0 to build, package and publish a draft GitHub release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $v = '${{ github.ref_name }}'.TrimStart('v')
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Test
+        run: dotnet test -c Release
+
+      - name: Fetch and verify WinDivert
+        shell: pwsh
+        run: ./scripts/get-windivert.ps1
+
+      - name: Publish
+        run: >
+          dotnet publish src/TrafikRuler -c Release -r win-x64 -o out
+          -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $name = "TrafikRuler-${{ steps.version.outputs.version }}-win-x64"
+          Copy-Item LICENSE, THIRD_PARTY_NOTICES.md out/
+          Compress-Archive -Path out/* -DestinationPath "$name.zip"
+          $files = @("$name.zip") + (Get-ChildItem out -File | ForEach-Object FullName)
+          $sums = foreach ($f in $files) { "{0}  {1}" -f (Get-FileHash $f -Algorithm SHA256).Hash.ToLower(), (Split-Path $f -Leaf) }
+          $sums | Set-Content SHA256SUMS.txt -Encoding ascii
+          Get-Content SHA256SUMS.txt
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            TrafikRuler-${{ steps.version.outputs.version }}-win-x64.zip
+            SHA256SUMS.txt

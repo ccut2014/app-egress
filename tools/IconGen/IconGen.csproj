@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Генератор иконок TrafikRuler. Не входит в решение и в сборку программы:
+       запускается вручную, результат лежит в src/TrafikRuler/Assets.
+       Команда запуска описана в README (раздел «Иконки»). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>

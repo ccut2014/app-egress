@@ -1,0 +1,76 @@
+name: 🐞 Bug report
+description: Something doesn't work as expected
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please check [existing issues](https://github.com/li4inka/trafik-ruler/issues) first.
+        **Security problems** must be reported privately — see [SECURITY.md](https://github.com/li4inka/trafik-ruler/blob/main/SECURITY.md).
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: I added a rule "chrome.exe → Wi‑Fi", but chrome still uses Ethernet…
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: TrafikRuler version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: Run `winver` to see it.
+      placeholder: Windows 11 24H2 (26100.1234)
+    validations:
+      required: true
+
+  - type: textarea
+    id: adapters
+    attributes:
+      label: Network setup
+      description: Which adapters are involved (Ethernet, Wi‑Fi, VPN client and its name, LTE modem…), and which one is the default route?
+    validations:
+      required: true
+
+  - type: input
+    id: app
+    attributes:
+      label: Application the rule applies to
+      placeholder: chrome.exe, a game, a VPN client…
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Relevant lines from `%AppData%\TrafikRuler\log.txt`. Remove anything you consider private.
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I'm running the latest release.
+          required: true
+        - label: TrafikRuler is running as administrator and WinDivert files are next to the exe.
+          required: true

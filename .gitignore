@@ -1,0 +1,21 @@
+# Build output
+bin/
+obj/
+publish/
+out/
+*.zip
+SHA256SUMS.txt
+
+# Tests
+TestResults/
+*.trx
+
+# WinDivert binaries are downloaded by scripts/get-windivert.ps1, never committed
+native/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
