@@ -10,8 +10,10 @@ SHA256SUMS.txt
 TestResults/
 *.trx
 
-# WinDivert binaries are downloaded by scripts/get-windivert.ps1, never committed
-native/
+# WinDivert binaries are downloaded by scripts/get-windivert.ps1, never committed.
+# Anchored to the repo root: git on Windows is case-insensitive, and a bare "native/"
+# would also hide the source folder src/TrafikRuler/Native.
+/native/
 
 # IDE
 .vs/
