@@ -3,6 +3,8 @@ bin/
 obj/
 publish/
 out/
+/dist/
+/work/
 *.zip
 SHA256SUMS.txt
 
@@ -12,7 +14,7 @@ TestResults/
 
 # WinDivert binaries are downloaded by scripts/get-windivert.ps1, never committed.
 # Anchored to the repo root: git on Windows is case-insensitive, and a bare "native/"
-# would also hide the source folder src/TrafikRuler/Native.
+# would also hide the source folder src/AppEgress/Native.
 /native/
 
 # IDE

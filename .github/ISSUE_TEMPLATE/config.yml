@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: 🔒 Report a security vulnerability
-    url: https://github.com/li4inka/trafik-ruler/security/advisories/new
+    url: https://github.com/ccut2014/app-egress/security/advisories/new
     about: Please report security issues privately, not as public issues.
   - name: ❓ Questions & ideas
-    url: https://github.com/li4inka/trafik-ruler/discussions
-    about: Ask questions and share setups in Discussions.
+    url: https://github.com/ccut2014/app-egress/issues
+    about: Ask questions and share setups in this repository.

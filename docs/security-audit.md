@@ -1,5 +1,7 @@
 # TrafikRuler — аудит: защита от копирования и репутация у антивирусов
 
+> Historical upstream document, retained for provenance. Its branding, file sizes and release advice predate AppEgress and are not the current project's release status or additional license terms. See [UPSTREAM.md](../UPSTREAM.md), [README](../README.md) and [SECURITY](../SECURITY.md).
+
 Документ о двух вещах: (1) насколько легко чужой человек может вскрыть, переименовать и
 перевыпустить TrafikRuler под своим именем, и что с этим реально делать; (2) как сделать,
 чтобы запуск легитимной программы не вызывал ложных срабатываний Защитника Windows.

@@ -1,45 +1,34 @@
-# Security Policy
+# Security policy
 
-TrafikRuler runs with administrator rights and loads a kernel-mode packet filter driver, so we take security reports seriously.
+AppEgress runs with administrator rights. Routing mode loads WinDivert and can alter or reset connections. Monitor-only rules use read-only metadata, but the application retains its administrator launch requirement.
 
-## Supported versions
+## Report privately
 
-Only the [latest release](https://github.com/li4inka/trafik-ruler/releases/latest) receives security fixes.
+Do not publish credentials, VPN subscriptions or sensitive connection records in a public issue.
 
-## Reporting a vulnerability
+When private reporting is enabled, use [GitHub private vulnerability reporting](https://github.com/ccut2014/app-egress/security/advisories/new). If that channel is unavailable, contact [ccut2014](https://github.com/ccut2014) through an available private channel before sharing details.
 
-**Please do not open a public issue for security problems.**
+Describe the affected version, Windows version, impact and reproducible steps. Do not test against a server or account without authorization.
 
-Report privately via GitHub: **[Report a vulnerability](https://github.com/li4inka/trafik-ruler/security/advisories/new)**. Include:
+## Current limitations
 
-- the TrafikRuler version and Windows version;
-- what an attacker can achieve (for example, privilege escalation, traffic leaking past a kill switch, crashes triggered by crafted packets);
-- steps to reproduce or a proof of concept.
+- Windows route queries do not prove packet transmission or end-to-end VPN forwarding.
+- Unknown process ownership, unmatched fragments, stopped interception and packet-processing exceptions retain inherited fail-open behavior.
+- A local peer's other connections are not verified forwarding paths of the original application.
+- Shared proxy upstream attribution, actual proxy billing and UDP remote endpoints remain unknown.
+- A rename, build or passing synthetic test does not establish complete dual-VPN compatibility.
 
-You can expect an acknowledgment within a few days. We'll keep you updated, agree on a disclosure date with you, and credit you in the release notes unless you prefer otherwise.
+There is no AppEgress release or security audit published as part of the source rename.
 
-## In scope
+## Verify releases
 
-- Code in this repository (packet parsing and rewriting, NAT, rule handling, settings, autostart).
-- Release packaging and the GitHub Actions workflows.
-
-## Out of scope
-
-- Vulnerabilities in [WinDivert](https://github.com/basil00/WinDivert) itself — please report those upstream.
-- Microsoft Defender classifying WinDivert as `HackTool:Win64/WinDivert` — this is a known, documented classification, see the [README](README.md#about-the-microsoft-defender-warning).
-
-## Verifying downloads
-
-Every release lists SHA256 checksums for its files. Check them before running:
+Use this repository's [Releases](https://github.com/ccut2014/app-egress/releases) when available, compare the provided SHA-256 checksums, and check the WinDivert driver signature:
 
 ```powershell
-Get-FileHash .\TrafikRuler-*-win-x64.zip -Algorithm SHA256
-```
-
-`WinDivert64.sys` must have a valid Authenticode signature:
-
-```powershell
+Get-FileHash .\AppEgress-*-win-x64.zip -Algorithm SHA256
 Get-AuthenticodeSignature .\WinDivert64.sys
 ```
 
-Only download TrafikRuler from [this repository's Releases page](https://github.com/li4inka/trafik-ruler/releases).
+WinDivert DLL/driver hashes are pinned in `scripts/get-windivert.ps1`. The upstream DLL is unsigned; the driver must have a valid signature. AppEgress application signing, if used in a future release, is separate from the driver signature.
+
+WinDivert vulnerabilities should be reported to [WinDivert upstream](https://github.com/basil00/WinDivert). Preserve the attribution and third-party notices when distributing modified builds.

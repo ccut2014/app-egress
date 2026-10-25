@@ -2,7 +2,7 @@
 # into native\x64, where the build picks them up.
 #
 # Microsoft Defender classifies WinDivert as HackTool:Win64/WinDivert (PUA) and may delete
-# the download. See README.md, "About the Microsoft Defender warning".
+# the download. See SECURITY.md and THIRD_PARTY_NOTICES.md.
 #
 # The script fails unless both files match the pinned SHA256 of the official 2.2.2-A release
 # and the driver carries a valid Authenticode signature (upstream ships WinDivert.dll unsigned),
@@ -47,6 +47,11 @@ if ($sig.Status -ne 'Valid') {
 }
 Write-Host "WinDivert64.sys signature: Valid ($($sig.SignerCertificate.Subject))"
 
-Remove-Item -Recurse -Force $tmp
+$resolvedRoot = [IO.Path]::GetFullPath($root).TrimEnd('\')
+$resolvedTmp = [IO.Path]::GetFullPath($tmp)
+if (-not $resolvedTmp.Equals((Join-Path $resolvedRoot 'native\download'), [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Unexpected cleanup directory; refusing recursive removal'
+}
+Remove-Item -LiteralPath $resolvedTmp -Recurse -Force
 Write-Host "Done: $dest"
 Get-ChildItem $dest | Format-Table Name, Length

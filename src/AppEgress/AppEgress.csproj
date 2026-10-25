@@ -1,0 +1,81 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- WinForms нужен только для значка в трее (NotifyIcon) и извлечения иконок exe -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- WFAC010: DPI задаётся в манифесте, это нужно WPF; Application.SetHighDpiMode от WinForms не используется -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Иконка exe; окна WPF без явной Icon берут её же. Генератор: tools/IconGen -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <AssemblyName>AppEgress</AssemblyName>
+    <RootNamespace>AppEgress</RootNamespace>
+
+    <!-- AppEgress is a maintained fork. Preserve upstream authorship and distinguish local changes. -->
+    <Version>1.1.0</Version>
+    <FileVersion>1.1.0.0</FileVersion>
+    <Product>AppEgress</Product>
+    <AssemblyTitle>AppEgress</AssemblyTitle>
+    <Company>ccut2014</Company>
+    <Authors>ccut2014;kulich Software</Authors>
+    <Copyright>© 2026 kulich Software; AppEgress modifications © 2026 ccut2014. GPL-3.0-or-later</Copyright>
+    <Description>Windows application network egress analysis and routing management. Based on TrafikRuler.</Description>
+
+    <!-- Небольшой самодостаточный от зависимостей запуск: один exe, .NET ставит пользователь.
+         При отсутствии .NET Desktop Runtime apphost сам открывает официальную страницу Microsoft. -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <!-- Release: без .pdb, чтобы рядом с exe был только один файл; Debug оставляем с символами -->
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AppEgress.Tests" />
+    <!-- Глобальные using от WinForms конфликтуют с WPF (Button, Color, Application…) -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <!-- Иконки состояния в трее и маленькая иконка в заголовке окна -->
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\tray-active.ico" LogicalName="tray-active.ico" />
+    <EmbeddedResource Include="Assets\tray-idle.ico" LogicalName="tray-idle.ico" />
+    <EmbeddedResource Include="Assets\tray-error.ico" LogicalName="tray-error.ico" />
+  </ItemGroup>
+
+  <!-- Переводы интерфейса: Localization\<код>.json встраивается как lang.<код>.json -->
+  <ItemGroup>
+    <EmbeddedResource Include="Localization\*.json" LogicalName="lang.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!--
+    WinDivert.dll ищет WinDivert64.sys в своей папке, поэтому оба файла кладутся рядом с exe
+    и никогда не упаковываются внутрь single-file bundle.
+    Файлы не хранятся в репозитории: см. README.md, раздел «Установка WinDivert».
+  -->
+  <ItemGroup>
+    <None Include="..\..\native\x64\WinDivert.dll" Condition="Exists('..\..\native\x64\WinDivert.dll')">
+      <Link>WinDivert.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+    <None Include="..\..\native\x64\WinDivert64.sys" Condition="Exists('..\..\native\x64\WinDivert64.sys')">
+      <Link>WinDivert64.sys</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+  </ItemGroup>
+
+</Project>

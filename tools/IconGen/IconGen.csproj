@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Генератор иконок TrafikRuler. Не входит в решение и в сборку программы:
-       запускается вручную, результат лежит в src/TrafikRuler/Assets.
+  <!-- Генератор иконок AppEgress. Не входит в решение и в сборку программы:
+       запускается вручную, результат лежит в src/AppEgress/Assets.
        Команда запуска описана в README (раздел «Иконки»). -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>

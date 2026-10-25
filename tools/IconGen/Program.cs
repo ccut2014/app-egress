@@ -6,7 +6,7 @@ using System.Windows.Media.Imaging;
 namespace IconGen;
 
 /// <summary>
-/// Рисует иконку TrafikRuler: скруглённая плашка с градиентом, на ней развилка маршрута.
+/// Рисует иконку AppEgress: скруглённая плашка с градиентом, на ней развилка маршрута.
 /// Вход слева, узел-переключатель, активный путь со стрелкой вверх-вправо и приглушённый путь вниз.
 /// Все размеры заданы в сетке 256×256 и масштабируются; для мелких размеров линии толще, детали проще.
 /// </summary>
@@ -318,7 +318,7 @@ internal static class Program
             double dip = 1.0;
             var display = new Typeface(new FontFamily("Segoe UI Variable Display, Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
             var text = new Typeface(new FontFamily("Segoe UI Variable Text, Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-            var title = new FormattedText("TrafikRuler", System.Globalization.CultureInfo.InvariantCulture,
+            var title = new FormattedText("AppEgress", System.Globalization.CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight, display, 70, Brushes.White, dip);
             dc.DrawText(title, new Point(84, 262));
             var tagline = new FormattedText("Route any Windows app through\nthe network adapter you choose.",

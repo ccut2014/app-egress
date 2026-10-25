@@ -8,7 +8,7 @@
 
 ## Screenshots
 
-<!-- For UI changes: before / after. Tip: set TRAFIKRULER_PREVIEW_DIR and run `dotnet test` to render them. -->
+<!-- For UI changes: before / after. Tip: set APPEGRESS_PREVIEW_DIR and run `dotnet test` when validation is requested. -->
 
 ## Checklist
 
