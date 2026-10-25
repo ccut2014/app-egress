@@ -19,7 +19,7 @@ AppEgress объединяет TCP-соединения, локальные пр
 
 ## Запуск
 
-Windows 10/11 x64, .NET 8 Desktop Runtime x64 и права администратора.
+Windows 10/11 x64 и права администратора. Вариант `win-x64-light.zip` требует .NET 8 Desktop Runtime x64; `win-x64-full.zip` включает среду выполнения.
 
 После публикации загрузите архив из [Releases](https://github.com/ccut2014/app-egress/releases), распакуйте его, завершите прежний экземпляр через меню трея и запустите `AppEgress.exe`. Выберите наблюдение или адаптер и снимите паузу при необходимости.
 
@@ -30,7 +30,7 @@ Windows 10/11 x64, .NET 8 Desktop Runtime x64 и права администра
 ```powershell
 ./scripts/get-windivert.ps1
 dotnet build AppEgress.sln -c Release
-./scripts/package.ps1 -Version 1.1.0
+./scripts/package.ps1 -Version 1.1.0 -Variant Both
 ```
 
 Скрипт упаковки не запускает тесты или приложение.

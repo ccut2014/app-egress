@@ -32,7 +32,7 @@
 
 ## 运行
 
-需要 Windows 10/11 x64、.NET 8 **Desktop Runtime x64**、管理员权限。默认发布轻量版，使用本机已安装的 .NET；WinDivert 两个文件与主程序放在一起。
+需要 Windows 10/11 x64 和管理员权限。已安装 .NET 8 **Desktop Runtime x64** 时可下载 `win-x64-light.zip` 轻量版；`win-x64-full.zip` 完整版自带运行环境，无需另装 .NET。WinDivert 两个文件与主程序放在一起。
 
 1. 发布后从 [Releases](https://github.com/ccut2014/app-egress/releases) 下载并完整解压。
 2. 从旧程序托盘菜单退出 TrafikRuler/AppEgress，再运行 `AppEgress.exe`。
@@ -53,10 +53,10 @@
 ./scripts/get-windivert.ps1
 dotnet restore AppEgress.sln
 dotnet build AppEgress.sln -c Release
-./scripts/package.ps1 -Version 1.1.0
+./scripts/package.ps1 -Version 1.1.0 -Variant Both
 ```
 
-默认轻量包输出到 `dist/`，源码单独提供。打包脚本不自动执行测试或启动程序。需验证时可另行运行：
+两种压缩包、对应源码及校验文件输出到 `dist/`；省略 `-Variant Both` 时只生成轻量版。源码包只收录当前提交的文件，打包前需先提交修改。打包脚本不自动执行测试或启动程序。需验证时可另行运行：
 
 ```powershell
 dotnet test AppEgress.sln -c Release

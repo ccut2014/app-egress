@@ -33,7 +33,7 @@ Details: [monitoring](docs/monitoring.md), [multiple VPNs](docs/multiple-vpns.md
 
 ## Run
 
-Requirements: Windows 10/11 x64, .NET 8 **Desktop Runtime** x64, administrator rights. Lightweight packages use the installed runtime. WinDivert files are supplied beside the executable for routing.
+Requirements: Windows 10/11 x64 and administrator rights. Choose `win-x64-light.zip` if .NET 8 **Desktop Runtime** x64 is installed, or `win-x64-full.zip` to use the included runtime. WinDivert files are supplied beside the executable for routing.
 
 1. Download an AppEgress archive from [Releases](https://github.com/ccut2014/app-egress/releases) when available, and extract the whole folder.
 2. Exit any old TrafikRuler/AppEgress instance through its tray menu.
@@ -59,10 +59,10 @@ dotnet restore AppEgress.sln
 dotnet build AppEgress.sln -c Release
 ```
 
-Create the default lightweight package in `dist/`:
+Create both packages, corresponding source and checksums in `dist/` (omit `-Variant Both` for the default lightweight package). Commit source changes before packaging:
 
 ```powershell
-./scripts/package.ps1 -Version 1.1.0
+./scripts/package.ps1 -Version 1.1.0 -Variant Both
 ```
 
 The package script does not run tests or launch the app. Run the existing tests separately when requested:

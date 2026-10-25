@@ -35,13 +35,14 @@ was changed while editing these sources.
 
 `scripts/package.ps1` defaults to a framework-dependent lightweight Windows x64 package,
 with separate corresponding source and checksums in `dist/`. It does not launch the
-app or run tests. An optional `-RestoreSource` can use an explicit dependency feed.
+app or run tests. `-Variant Both` also builds a self-contained full package. Source
+archives contain only the committed source. An optional `-RestoreSource` can use an explicit dependency feed.
 GitHub's release workflow calls this script after its existing test step and creates
 a draft release when a future release tag is pushed.
 
 ## Validation status
 
-Source/reference and format checks only. No build, test execution, application launch,
-settings migration or scheduled-task change was performed for the rename or source
-publication. Runtime compatibility and the new packaging script remain to be verified
-when requested.
+The source rename and initial source publication used source/reference and format
+checks only; those steps did not build or run the application, execute tests, migrate
+settings or change scheduled tasks. Later release builds record their validation
+scope in the release notes and each package's `BUILD-INFO.json`.

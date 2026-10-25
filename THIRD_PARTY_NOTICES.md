@@ -21,6 +21,7 @@ including one you compiled yourself from the source linked above.
 
 ## .NET
 
-AppEgress runs on the .NET 8 Desktop Runtime, which is installed separately by the user
-from <https://dotnet.microsoft.com/download/dotnet/8.0> and is distributed by Microsoft
-under the MIT license. The default lightweight package does not bundle the runtime.
+AppEgress runs on the .NET 8 Desktop Runtime. The lightweight package uses a separately
+installed runtime from <https://dotnet.microsoft.com/download/dotnet/8.0>; the full
+package includes it. Packages include the .NET host license, and full packages also
+include runtime package licenses and third-party notices in `licenses/`.

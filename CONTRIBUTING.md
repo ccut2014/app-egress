@@ -31,10 +31,10 @@ Localization files are in `src/AppEgress/Localization`. English is the key refer
 From a Git checkout with Git and the .NET 8 SDK installed:
 
 ```powershell
-./scripts/package.ps1 -Version 1.1.0
+./scripts/package.ps1 -Version 1.1.0 -Variant Both
 ```
 
-The script creates a lightweight Windows x64 package, corresponding source archive and checksums in `dist/`. It does not launch the program or run tests. Keep personal settings and build caches out of source releases.
+Commit source changes first. The script creates lightweight and self-contained Windows x64 packages, a source archive of that exact commit and checksums in `dist/`. Omit `-Variant Both` for the default lightweight package. It does not launch the program or run tests. Keep personal settings and build caches out of source releases.
 
 ## Scope of changes
 
